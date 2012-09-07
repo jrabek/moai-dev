@@ -27,7 +27,13 @@ int MOAIXmlParser::_parseFile ( lua_State* L ) {
 	
 	if ( MOAILogMessages::CheckFileExists ( filename, L )) {
 		TiXmlDocument doc;
-		doc.LoadFile ( filename );
+		if(!doc.LoadFile ( filename )) {
+			if(doc.Error())
+				MOAILog(L, MOAILogMessages::MOAIXMLParser_ParseError, "Failed to parse %s at or near %d:%d. Error is \"%s\"",
+						filename, doc.ErrorRow(), doc.ErrorCol(), doc.ErrorDesc());
+			else
+				MOAILog(L, MOAILogMessages::MOAIXMLParser_ParseError, "Failed to load %s", filename);
+		}
 		MOAIXmlParser::Parse ( state, doc.RootElement ());
 		return 1;
 	}

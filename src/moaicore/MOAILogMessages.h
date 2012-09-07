@@ -41,6 +41,7 @@ public:
 		MOAITexture_MemoryUse_SDFS,
 		MOAITexture_NoFramebuffer,
 		MOAITexture_NonPowerOfTwo_SDD,
+		MOAIXMLParser_ParseError,
 	};
 	
 	//----------------------------------------------------------------//
