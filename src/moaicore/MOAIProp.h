@@ -80,14 +80,17 @@ private:
 	friend class MOAIPartition;
 	friend class MOAIPartitionCell;
 	friend class MOAIPartitionLevel;
+	friend class MOAICollisionSet;
 
 	MOAIPartition*				mPartition;
 	MOAIPartitionCell*			mCell;
+	MOAICollisionSet*			mCollisionSet;
 	
 	// this is only for debug draw
 	MOAIPartitionLevel*			mLayer;
 	
 	USLeanLink < MOAIProp* >	mLinkInCell;
+	USLeanLink < MOAIProp* >	mLinkInCollisionSet;
 	MOAIProp*					mNextResult;
 
 	u32				mMask;
@@ -153,7 +156,6 @@ protected:
 	//----------------------------------------------------------------//
 	u32				GetFrameFitting			( USBox& bounds, USVec3D& offset, USVec3D& scale );
 	void			GetGridBoundsInView		( MOAICellCoord& c0, MOAICellCoord& c1 );
-	virtual u32		GetPropBounds			( USBox& bounds ); // get the prop bounds in model space
 	void			LoadGfxState			();
 	void			UpdateBounds			( u32 status );
 	void			UpdateBounds			( const USBox& bounds, u32 status );
@@ -220,6 +222,7 @@ public:
 	MOAIPartition*		GetPartitionTrait		();
 	bool				GetCellRect				( USRect* cellRect, USRect* paddedRect = 0 );
 	virtual void		GetCollisionShape		( MOAICollisionShape& shape );
+	virtual u32			GetPropBounds			( USBox& bounds ); // get the prop bounds in model space
 	virtual bool		Inside					( USVec3D vec, float pad );
 						MOAIProp				();
 	virtual				~MOAIProp				();

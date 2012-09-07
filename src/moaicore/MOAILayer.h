@@ -13,6 +13,7 @@ class MOAIBox2DWorld;
 class MOAICamera;
 class MOAICpSpace;
 class MOAIFrameBuffer;
+class MOAICollisionSet;
 
 //================================================================//
 // MOAILayer
@@ -50,6 +51,8 @@ private:
 		MOAILuaSharedPtr < MOAIBox2DWorld >	mBox2DWorld;
 	#endif
 
+		MOAILuaSharedPtr < MOAICollisionSet > mMOAICollisionSet;
+
 	USVec3D		mParallax;
 	bool		mShowDebugLines;
 	u32			mSortMode;
@@ -67,6 +70,7 @@ private:
 	static int	_insertProp			( lua_State* L );
 	static int	_removeProp			( lua_State* L );
 	static int	_setBox2DWorld		( lua_State* L );
+	static int	_setCollisionSet	( lua_State* L );
 	static int	_setCamera			( lua_State* L );
 	static int	_setCpSpace			( lua_State* L );
 	static int	_setFrameBuffer		( lua_State* L );

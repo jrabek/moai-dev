@@ -5,6 +5,7 @@
 #include <moaicore/MOAIBox2DWorld.h>
 #include <moaicore/MOAICamera.h>
 #include <moaicore/MOAICpSpace.h>
+#include <moaicore/MOAICollisionSet.h>
 #include <moaicore/MOAIDebugLines.h>
 #include <moaicore/MOAIDeck.h>
 #include <moaicore/MOAIFrameBuffer.h>
@@ -235,6 +236,23 @@ int MOAILayer::_setCpSpace ( lua_State* L ) {
 	#endif
 	return 0;
 }
+
+//----------------------------------------------------------------//
+/**	@name	setCollisionSet
+	@text	Sets a MOAICollisionSet for debug drawing.
+
+	@in		MOAILayer self
+	@in		MOAICollisionSet set
+	@out	nil
+*/
+int MOAILayer::_setCollisionSet ( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAILayer, "UU" )
+
+	self->mMOAICollisionSet.Set ( *self, state.GetLuaObject < MOAICollisionSet >( 2, true ));
+
+	return 0;
+}
+
 
 //----------------------------------------------------------------//
 /**	@name	setFrameBuffer
@@ -542,6 +560,11 @@ void MOAILayer::Draw ( int subPrimID ) {
 				gfxDevice.Flush ();
 			}
 		#endif
+
+			if ( this->mMOAICollisionSet ) {
+				this->mMOAICollisionSet->DrawDebug ();
+				gfxDevice.Flush ();
+			}
 	}
 	
 	gfxDevice.SetVertexTransform ( MOAIGfxDevice::VTX_WORLD_TRANSFORM );
@@ -732,6 +755,8 @@ MOAILayer::~MOAILayer () {
 	#if USE_BOX2D
 		this->mBox2DWorld.Set ( *this, 0 );
 	#endif
+
+	this->mMOAICollisionSet.Set ( *this, 0);
 }
 
 //----------------------------------------------------------------//
@@ -769,6 +794,7 @@ void MOAILayer::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "setBox2DWorld",			_setBox2DWorld },
 		{ "setCamera",				_setCamera },
 		{ "setCpSpace",				_setCpSpace },
+		{ "setCollisionSet",		_setCollisionSet },
 		{ "setFrameBuffer",			_setFrameBuffer },
 		{ "setParallax",			_setParallax },
 		{ "setPartition",			_setPartition },

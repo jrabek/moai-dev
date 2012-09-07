@@ -2,6 +2,7 @@
 // http://getmoai.com
 
 #include "pch.h"
+#include <moaicore/MOAICollisionSet.h>
 #include <moaicore/MOAICollisionShape.h>
 #include <moaicore/MOAIDeck.h>
 #include <moaicore/MOAIDeckRemapper.h>
@@ -1008,6 +1009,7 @@ void MOAIProp::LoadGfxState () {
 //----------------------------------------------------------------//
 MOAIProp::MOAIProp () :
 	mPartition ( 0 ),
+	mCollisionSet ( 0 ),
 	mCell ( 0 ),
 	mLayer ( 0 ),
 	mNextResult ( 0 ),
@@ -1027,6 +1029,7 @@ MOAIProp::MOAIProp () :
 	RTTI_END
 	
 	this->mLinkInCell.Data ( this );
+	this->mLinkInCollisionSet.Data ( this );
 	this->mBounds.Init ( 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f );
 }
 
@@ -1037,6 +1040,10 @@ MOAIProp::~MOAIProp () {
 		this->mCell->RemoveProp ( *this );
 	}
 	
+	if ( this->mCollisionSet ) {
+		this->mCollisionSet->RemoveProp ( *this );
+	}
+
 	this->mDeck.Set ( *this, 0 );
 	this->mRemapper.Set ( *this, 0 );
 	this->mGrid.Set ( *this, 0 );
