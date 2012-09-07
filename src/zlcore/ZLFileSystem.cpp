@@ -311,6 +311,9 @@ string ZLFileSystem::GetRelativePath ( char const* path ) {
 	string abspath = this->GetAbsoluteFilePath ( path );
 	string workpath = this->GetWorkingPath ();
 	
+	abspath.resize(buffer.length() + 2 );
+	workpath.resize(buffer.length() + 2 );
+
 	same = ComparePaths ( abspath.c_str (), workpath.c_str ());
 	if ( same == 0 ) {
 		return BlessPath ( path );
@@ -468,10 +471,11 @@ string ZLFileSystem::NormalizeFilePath ( const char* path ) {
 	size_t top = 0;
 
 	string buffer = BlessPath ( path );
+	buffer.resize(buffer.length() + 2 );
 
 	// normalize the path
 	for ( ; buffer [ i ]; ++i ) {
-		
+
 		if ( buffer [ i ] == '.' ) {
 		
 			if ( buffer [ i + 1 ] == '/' || buffer [ i + 1 ] == 0 ) {
