@@ -39,6 +39,8 @@ g = 0
 b = 0
 
 function collisionHandler(prop1, prop2)
+	print("Collision!")
+
 	prop1:setColor ( 0.5 + r, b, 0, 0 )
 	prop2:setColor ( r, 0.5+g, 0.25+b, 0 )
 	
@@ -51,6 +53,8 @@ function collisionHandler(prop1, prop2)
 	b = b + 0.2
 	
 end
+
+prop1:setBounds(-16, -16, 0, 16, 16, 0)
 
 collisionSet = MOAICollisionSet.new ()
 collisionSet:setCollisionHandler(collisionHandler)
