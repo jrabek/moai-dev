@@ -35,6 +35,8 @@ private:
 	static int		_setCollisionHandler	( lua_State* L );
 	static int		_setDebugDrawEnabled	( lua_State* L );
 
+	u32 GetCollisionBounds(MOAIProp *prop, USRect &boundRect);
+
 public:
 	
 	DECL_LUA_FACTORY ( MOAICollisionSet )

@@ -167,6 +167,23 @@ void MOAICollisionSet::RemoveProp ( MOAIProp& prop ) {
 
 }
 
+u32 MOAICollisionSet::GetCollisionBounds(MOAIProp *prop, USRect &boundRect)
+{
+	//TODO: the prop's local to world matrix is not updated after a setloc
+	//		until the next cycle via update attrib.  This means the first cycle
+	//		props may erroneously collide
+	USAffine3D localtoWorld = prop->GetLocalToWorldMtx ();
+	USBox bounds;
+	u32 status = prop->GetPropBounds(bounds);
+	if(status == MOAIProp::BOUNDS_GLOBAL || status == MOAIProp::BOUNDS_EMPTY)
+		return status;
+
+	boundRect = bounds.GetRect(USBox::PLANE_XY);
+	localtoWorld.Transform ( boundRect );
+
+	return status;
+}
+
 //----------------------------------------------------------------//
 void MOAICollisionSet::OnUpdate ( float step ) {
 	// Currently an n^2 algorithm to check for collisions
@@ -174,63 +191,53 @@ void MOAICollisionSet::OnUpdate ( float step ) {
 
 	PropIt firstPropIt = this->mProps.Head ();
 
-	// MOAIPrint("MOAICollisionSet::OnUpdate(%f)\n", step);
-
 	while ( firstPropIt ) {
 		PropIt secondPropIt = firstPropIt->Next ();
 		MOAIProp* firstProp = firstPropIt->Data ();
-		USBox firstPropBounds;
-
-		firstPropBounds = firstProp->GetBounds ();
+		USRect firstPropBounds;
 
 		firstPropIt = firstPropIt->Next ();
 
-		if(firstPropBounds.IsPoint())
+		if(MOAIProp::BOUNDS_OK != GetCollisionBounds(firstProp, firstPropBounds))
+			continue;
+
+		if(firstPropBounds.Area() == 0)
 			continue;
 
 		while ( secondPropIt ) {
 			MOAIProp* secondProp = secondPropIt->Data ();
-			USBox secondPropBounds;
 
-			secondPropBounds  = secondProp->GetBounds ();
+			USRect secondPropBounds;
+
+			if(MOAIProp::BOUNDS_OK != GetCollisionBounds(secondProp, secondPropBounds))
+				continue;
 
 			secondPropIt = secondPropIt->Next ();
 
-			if(secondPropBounds.IsPoint())
+			if(secondPropBounds.Area() == 0)
 				continue;
 
-/*
-			MOAIPrint("Checking props. (%f, %f, %f, %f) and (%f, %f, %f, %f)\n",
-					firstPropBounds.mMin.mX, firstPropBounds.mMin.mY,
-					firstPropBounds.mMax.mX, firstPropBounds.mMax.mX,
-					secondPropBounds.mMin.mX, secondPropBounds.mMin.mY,
-					secondPropBounds.mMax.mX, secondPropBounds.mMax.mX);
-*/
-
-			/*	To handle rotated rectangular props, we need to do something like this (ugly?) */
-
 			/*
-				USAffine3D localtoWorld = firstProp->GetLocaltoWorldMtx ();
-				GetPropBounds(firstPropBounds);
-				USRect firstPropRect = firstPropBounds.getRect(PLANE_XY);
-				localtoWorld.Transform ( firstPropRect );
-				...same for second prop
-				firstPropRect.Overlap(secondPropRect)
-			 */
+			MOAIPrint("Checking props. (%f, %f, %f, %f) and (%f, %f, %f, %f)\n",
+					firstPropBounds.mXMin, firstPropBounds.mYMin,
+					firstPropBounds.mXMax, firstPropBounds.mYMax,
+					secondPropBounds.mXMin, secondPropBounds.mYMin,
+					secondPropBounds.mXMax, secondPropBounds.mYMax);
+			*/
 
-			/* To handle at a finer level of detail, CollsionShape would need to be used
+			/* TODO: To handle at a finer level of detail, CollsionShape would need to be used
 			 * which would require full polygon collision checking
 			 */
 
 			if(firstPropBounds.Overlap(secondPropBounds))
 			{
-/*
+				/*
 				MOAIPrint("Overlapping props. (%f, %f, %f, %f) and (%f, %f, %f, %f)\n",
-						firstPropBounds.mMin.mX, firstPropBounds.mMin.mY,
-						firstPropBounds.mMax.mX, firstPropBounds.mMax.mX,
-						secondPropBounds.mMin.mX, secondPropBounds.mMin.mY,
-						secondPropBounds.mMax.mX, secondPropBounds.mMax.mX);
-*/
+						firstPropBounds.mXMin, firstPropBounds.mYMin,
+						firstPropBounds.mXMax, firstPropBounds.mYMax,
+						secondPropBounds.mXMin, secondPropBounds.mYMin,
+						secondPropBounds.mXMax, secondPropBounds.mYMax);
+				*/
 
 				MOAILuaStateHandle state = MOAILuaRuntime::Get ().State ();
 				if ( this->PushLocal ( state, this->mCollisionHandler )) {
