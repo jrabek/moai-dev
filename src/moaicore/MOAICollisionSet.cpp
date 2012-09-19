@@ -209,10 +209,10 @@ void MOAICollisionSet::OnUpdate ( float step ) {
 
 			USRect secondPropBounds;
 
+			secondPropIt = secondPropIt->Next ();
+
 			if(MOAIProp::BOUNDS_OK != GetCollisionBounds(secondProp, secondPropBounds))
 				continue;
-
-			secondPropIt = secondPropIt->Next ();
 
 			if(secondPropBounds.Area() == 0)
 				continue;
