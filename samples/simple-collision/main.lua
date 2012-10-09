@@ -58,6 +58,6 @@ prop1:setBounds(-16, -16, 0, 16, 16, 0)
 
 collisionSet = MOAICollisionSet.new ()
 collisionSet:setCollisionHandler(collisionHandler)
-collisionSet:insertProp(prop1)
-collisionSet:insertProp(prop2)
+collisionSet:insertDynamicProp(prop1)
+collisionSet:insertDynamicProp(prop2)
 collisionSet:start()
