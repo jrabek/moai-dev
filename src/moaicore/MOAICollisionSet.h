@@ -24,28 +24,33 @@ private:
 	MOAILuaLocal	mCollisionHandler;
 
 	typedef USLeanList < MOAIProp* >::Iterator PropIt;
-	USLeanList < MOAIProp* > mProps;
+	USLeanList < MOAIProp* > mStaticProps;
+	USLeanList < MOAIProp* > mDynamicProps;
 
 	bool mDebugDrawEnabled;
 
 	//----------------------------------------------------------------//
 	static int		_clear					( lua_State* L );
-	static int		_insertProp				( lua_State* L );
+	static int		_insertStaticProp		( lua_State* L );
+	static int		_insertDynamicProp		( lua_State* L );
 	static int		_removeProp				( lua_State* L );
 	static int		_setCollisionHandler	( lua_State* L );
 	static int		_setDebugDrawEnabled	( lua_State* L );
 
-	u32 GetCollisionBounds(MOAIProp *prop, USRect &boundRect);
-
+	u32				GetCollisionBounds		( MOAIProp *prop, USRect &boundRect );
+	void			ReportCollsion			( MOAIProp *firstProp, MOAIProp *secondProp );
+	void			CheckPropAgainstList	( MOAIProp *firstProp, PropIt secondPropIt );
+	void			ForceUpdate				();
 public:
 	
 	DECL_LUA_FACTORY ( MOAICollisionSet )
 	
 	//----------------------------------------------------------------//
 	void			Clear					();
-	void			InsertProp				( MOAIProp& prop );
-					MOAICollisionSet			();
-					~MOAICollisionSet			();
+	void			InsertStaticProp		( MOAIProp& prop );
+	void			InsertDynamicProp		( MOAIProp& prop );
+					MOAICollisionSet		();
+					~MOAICollisionSet		();
 	void			OnUpdate				( float step );
 	void			RegisterLuaClass		( MOAILuaState& state );
 	void			RegisterLuaFuncs		( MOAILuaState& state );
