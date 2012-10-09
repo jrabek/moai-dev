@@ -311,8 +311,8 @@ string ZLFileSystem::GetRelativePath ( char const* path ) {
 	string abspath = this->GetAbsoluteFilePath ( path );
 	string workpath = this->GetWorkingPath ();
 	
-	abspath.resize(buffer.length() + 2 );
-	workpath.resize(buffer.length() + 2 );
+	abspath.resize(abspath.length() + 2 );
+	workpath.resize(workpath.length() + 2 );
 
 	same = ComparePaths ( abspath.c_str (), workpath.c_str ());
 	if ( same == 0 ) {
