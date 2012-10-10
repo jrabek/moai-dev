@@ -22,12 +22,14 @@ private:
 	friend class MOAIProp;
 
 	MOAILuaLocal	mCollisionHandler;
+	u32				mTileMask;
 
 	typedef USLeanList < MOAIProp* >::Iterator PropIt;
 	USLeanList < MOAIProp* > mStaticProps;
 	USLeanList < MOAIProp* > mDynamicProps;
 
 	bool mDebugDrawEnabled;
+	bool mSetModified;
 
 	//----------------------------------------------------------------//
 	static int		_clear					( lua_State* L );
@@ -35,10 +37,12 @@ private:
 	static int		_insertDynamicProp		( lua_State* L );
 	static int		_removeProp				( lua_State* L );
 	static int		_setCollisionHandler	( lua_State* L );
+	static int		_setTileMask			( lua_State* L );
 	static int		_setDebugDrawEnabled	( lua_State* L );
 
 	u32				GetCollisionBounds		( MOAIProp *prop, USRect &boundRect );
-	void			ReportCollsion			( MOAIProp *firstProp, MOAIProp *secondProp );
+	void			ReportCollsion			( MOAIProp *firstProp, MOAIProp *secondProp, u32 tile);
+	bool			CheckTileMask			( u32 idx );
 	void			CheckPropAgainstList	( MOAIProp *firstProp, PropIt secondPropIt );
 	void			ForceUpdate				();
 public:

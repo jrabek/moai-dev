@@ -89,10 +89,36 @@ int MOAICollisionSet::_removeProp ( lua_State* L ) {
 	return 0;
 }
 
+//----------------------------------------------------------------//
+/**	@name	setCollisionHandler
+	@text	Sets the collision handler to call when two props collide.
+
+	@in		MOAICollisionSet self
+	@in		function with signature function(prop1, prop2)
+	@out	nil
+*/
 int MOAICollisionSet::_setCollisionHandler	( lua_State* L ) {
 	MOAI_LUA_SETUP ( MOAICollisionSet, "UF" )
 
 	self->SetLocal ( state, 2, self->mCollisionHandler );
+
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	setTileMask
+	@text	Sets the tile mask to use when determining if a dynamic
+			prop has collided with a grid cell
+
+	@in		MOAICollisionSet self
+	@opt	number mask
+	@out	nil
+*/
+
+int MOAICollisionSet::_setTileMask	( lua_State* L ) {
+	MOAI_LUA_SETUP ( MOAICollisionSet, "U" )
+
+	self->mTileMask = state.GetValue < u32 >( 2, 0 );
 
 	return 0;
 }
@@ -133,6 +159,8 @@ void MOAICollisionSet::Clear () {
 			propIt = propIt->Next ();
 			this->RemoveProp(*prop);
 	}
+
+	mSetModified = true;
 }
 
 //----------------------------------------------------------------//
@@ -150,6 +178,8 @@ void MOAICollisionSet::InsertStaticProp ( MOAIProp& prop ) {
 	this->LuaRetain ( &prop );
 
 	prop.ScheduleUpdate ();
+
+	mSetModified = true;
 }
 
 //----------------------------------------------------------------//
@@ -167,11 +197,14 @@ void MOAICollisionSet::InsertDynamicProp ( MOAIProp& prop ) {
 	this->LuaRetain ( &prop );
 	
 	prop.ScheduleUpdate ();
+
+	mSetModified = true;
 }
 
 //----------------------------------------------------------------//
 MOAICollisionSet::MOAICollisionSet () :
-	mDebugDrawEnabled(false)
+	mDebugDrawEnabled(false),
+	mTileMask(1)
 {
 	RTTI_BEGIN
 		RTTI_EXTEND ( MOAIAction )
@@ -199,6 +232,7 @@ void MOAICollisionSet::RegisterLuaFuncs ( MOAILuaState& state ) {
 		{ "insertDynamicProp",			_insertDynamicProp },
 		{ "removeProp",					_removeProp },
 		{ "setCollisionHandler",		_setCollisionHandler },
+		{ "setTileMask",				_setTileMask },
 		{ "setDebugDrawEnabled",		_setDebugDrawEnabled },
 		{ NULL, NULL }
 	};
@@ -217,6 +251,8 @@ void MOAICollisionSet::RemoveProp( MOAIProp& prop ) {
 
 	this->LuaRelease ( &prop );
 
+	mSetModified = true;
+
 }
 
 u32 MOAICollisionSet::GetCollisionBounds(MOAIProp *prop, USRect &boundRect)
@@ -233,17 +269,25 @@ u32 MOAICollisionSet::GetCollisionBounds(MOAIProp *prop, USRect &boundRect)
 	return status;
 }
 
-void MOAICollisionSet::ReportCollsion(MOAIProp *firstProp, MOAIProp *secondProp)
-{
+void MOAICollisionSet::ReportCollsion(MOAIProp *firstProp, MOAIProp *secondProp, u32 tile = -1) {
 	if(this->mCollisionHandler) {
 		MOAILuaStateHandle state = MOAILuaRuntime::Get ().State ();
 		if ( this->PushLocal ( state, this->mCollisionHandler )) {
 
 			firstProp->PushLuaUserdata(state);
 			secondProp->PushLuaUserdata(state);
-			state.DebugCall ( 2, 0 );
+			if(-1 == tile) {
+				state.DebugCall ( 2, 0 );
+			} else {
+				state.Push(tile);
+				state.DebugCall ( 3, 0 );
+			}
 		}
 	}
+}
+
+bool MOAICollisionSet::CheckTileMask(u32 tile) {
+	return ((tile & this->mTileMask) == this->mTileMask);
 }
 
 void MOAICollisionSet::CheckPropAgainstList(MOAIProp *firstProp, PropIt secondPropIt ) {
@@ -262,8 +306,6 @@ void MOAICollisionSet::CheckPropAgainstList(MOAIProp *firstProp, PropIt secondPr
 		USRect secondPropBounds;
 
 		secondPropIt = secondPropIt->Next ();
-
-		secondProp->ForceUpdate();
 
 		if(MOAIProp::BOUNDS_OK != GetCollisionBounds(secondProp, secondPropBounds))
 			continue;
@@ -297,12 +339,15 @@ void MOAICollisionSet::CheckPropAgainstList(MOAIProp *firstProp, PropIt secondPr
 						secondPropBounds.mXMax, secondPropBounds.mYMax);
 				*/
 				ReportCollsion(firstProp, secondProp);
+				if(mSetModified)
+					return;
 
 			}
 		} else {
 			for(int x = 0; x < propGrid->GetWidth(); x++) {
 				for(int y = 0; y < propGrid->GetWidth(); y++) {
-					if(propGrid->GetTile(x, y)) {
+					u32 tile = propGrid->GetTile(x, y);
+					if(tile) {
 						MOAICellCoord coord(x,y);
 						secondPropBounds = propGrid->GetCellRect(coord);
 						if(firstPropBounds.Overlap(secondPropBounds))
@@ -314,8 +359,9 @@ void MOAICollisionSet::CheckPropAgainstList(MOAIProp *firstProp, PropIt secondPr
 									secondPropBounds.mXMin, secondPropBounds.mYMin,
 									secondPropBounds.mXMax, secondPropBounds.mYMax);
 							*/
-							ReportCollsion(firstProp, secondProp);
-
+							ReportCollsion(firstProp, secondProp, tile);
+							if(mSetModified)
+								return;
 						}
 					}
 				}
@@ -344,6 +390,8 @@ void MOAICollisionSet::OnUpdate ( float step ) {
 	// leading to especially weird behavior (e.g. right after two props
 	// are created in different parts of the screen they can collide
 	// since their positions have not been updated)
+	this->mSetModified = false;
+
 	ForceUpdate();
 
 	PropIt firstPropIt = this->mDynamicProps.Head ();
@@ -355,10 +403,14 @@ void MOAICollisionSet::OnUpdate ( float step ) {
 		firstPropIt = firstPropIt->Next ();
 
 		CheckPropAgainstList(firstProp, secondPropIt);
+		if(mSetModified)
+			return;
 
 		PropIt staticPropIt = mStaticProps.Head ();
 
 		CheckPropAgainstList(firstProp, staticPropIt);
+		if(mSetModified)
+			return;
 
 	}
 
