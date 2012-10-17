@@ -6,6 +6,7 @@
 
 #include <moaicore/MOAILua.h>
 #include <moaicore/MOAIAction.h>
+#include <moaicore/MOAIProp.h>
 
 //================================================================//
 // MOAICollisionSet

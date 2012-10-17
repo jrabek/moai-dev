@@ -13,6 +13,7 @@
 
 class MOAICellCoord;
 class MOAICollisionShape;
+class MOAICollisionSet;
 class MOAIDeck;
 class MOAIDeckRemapper;
 class MOAIGfxState;
