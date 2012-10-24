@@ -440,7 +440,7 @@ MOAIPathFinder::MOAIPathFinder () :
 	
 	RTTI_SINGLE ( MOAILuaObject )
 
-	this->mBodyRect.Init ( 0, 0, 1, 1 );
+	this->mBodyRect.Init ( 0, 0, 0, 0 );
 }
 
 //----------------------------------------------------------------//
