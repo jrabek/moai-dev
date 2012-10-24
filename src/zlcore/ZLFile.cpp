@@ -184,6 +184,8 @@ int ZLFile::Open ( const char* filename, const char* mode ) {
 		#ifdef MOAI_COMPILER_MSVC
 			FILE* stdFile = 0;
 			stdFile = _fsopen ( filename, mode, _SH_DENYNO );
+			if( stdFile )
+				errno = 0;
 		#else
 			FILE* stdFile = fopen ( filename, mode );
 		#endif
