@@ -92,12 +92,13 @@ private:
 	static int		_getStep					( lua_State* L );
 	static int		_openWindow					( lua_State* L );
 	static int		_pauseTimer					( lua_State* L );
+	static int		_reportDeclarations			( lua_State* L );
 	static int		_reportHistogram			( lua_State* L );
 	static int		_reportLeaks				( lua_State* L );
 	static int		_setBoostThreshold			( lua_State* L );
 	static int		_setCpuBudget				( lua_State* L );
 	static int		_setHistogramEnabled		( lua_State* L );
-	static int		_setLeakTrackingEnabled		( lua_State* L );
+	static int		_setObjectTrackingEnabled	( lua_State* L );
 	static int		_setLongDelayThreshold		( lua_State* L );
 	static int		_setLoopFlags				( lua_State* L );
 	static int		_setLuaAllocLogEnabled		( lua_State* L );

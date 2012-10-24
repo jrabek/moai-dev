@@ -418,7 +418,8 @@ void MOAIAction::Update ( float step, u32 pass, bool checkPass ) {
 		double elapsed = USDeviceTime::GetTimeInSeconds () - t0;
 		if ( elapsed >= 0.005 ) {
 			STLString debugInfo = this->GetDebugInfo();
-			MOAILog ( 0, MOAILogMessages::MOAIAction_Profile_PSFF, this, this->TypeName (), debugInfo.c_str(), step * 1000, elapsed * 1000 );
+			MOAILog ( 0, MOAILogMessages::MOAIAction_Profile_PSFF, this, dynamic_cast<MOAILuaObject *>(this), this->TypeName (), debugInfo.c_str(), step * 1000, elapsed * 1000 );
+			MOAILuaRuntime::Get ().ReportDeclaration(MOAILogMgr::Get ().GetFile (), dynamic_cast<MOAILuaObject *>(this));
 		}
 	}
 

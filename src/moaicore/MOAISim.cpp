@@ -402,8 +402,25 @@ int MOAISim::_reportLeaks ( lua_State* L ) {
 	luaRuntime.ReportLeaksFormatted ( MOAILogMgr::Get ().GetFile ());
 
 	if ( clearAfter ) {
-		luaRuntime.ResetLeakTracking ();
+		luaRuntime.ResetObjectTracking ();
 	}
+	return 0;
+}
+
+//----------------------------------------------------------------//
+/**	@name	reportDeclarations
+	@text	Dump where all MOAI objects were created. Useful when used
+			in conjunction with other debugging
+
+	@out	nil
+*/
+int MOAISim::_reportDeclarations ( lua_State* L ) {
+
+	MOAILuaState state ( L );
+
+	MOAILuaRuntime& luaRuntime = MOAILuaRuntime::Get ();
+	luaRuntime.ReportDeclarations ( MOAILogMgr::Get ().GetFile ());
+
 	return 0;
 }
 
@@ -453,7 +470,7 @@ int MOAISim::_setHistogramEnabled ( lua_State* L ) {
 }
 
 //----------------------------------------------------------------//
-/**	@name	setLeakTrackingEnabled
+/**	@name	setObjectTrackingEnabled
 	@text	Enable extra memory book-keeping measures that allow all MOAI objects to be
 			tracked back to their point of allocation (in Lua). Use together with
 			MOAISim.reportLeaks() to determine exactly where your memory usage is
@@ -464,9 +481,9 @@ int MOAISim::_setHistogramEnabled ( lua_State* L ) {
 	@opt	bool enable		Default value is false.
 	@out	nil
 */
-int MOAISim::_setLeakTrackingEnabled ( lua_State* L ) {
+int MOAISim::_setObjectTrackingEnabled ( lua_State* L ) {
 	MOAILuaState state ( L );
-	MOAILuaRuntime::Get ().EnableLeakTracking ( state.GetValue < bool >( 1, false ));
+	MOAILuaRuntime::Get ().EnableObjectTracking ( state.GetValue < bool >( 1, false ));
 	return 0;
 }
 
@@ -769,12 +786,13 @@ void MOAISim::RegisterLuaClass ( MOAILuaState& state ) {
 		{ "getStep",					_getStep },
 		{ "openWindow",					_openWindow },
 		{ "pauseTimer",					_pauseTimer },
+		{ "reportDeclarations",			_reportDeclarations},
 		{ "reportHistogram",			_reportHistogram },
 		{ "reportLeaks",				_reportLeaks },
 		{ "setBoostThreshold",			_setBoostThreshold },
 		{ "setCpuBudget",				_setCpuBudget},
 		{ "setHistogramEnabled",		_setHistogramEnabled },
-		{ "setLeakTrackingEnabled",		_setLeakTrackingEnabled },
+		{ "setObjectTrackingEnabled",	_setObjectTrackingEnabled },
 		{ "setListener",				&MOAIGlobalEventSource::_setListener < MOAISim > },
 		{ "setLongDelayThreshold",		_setLongDelayThreshold },
 		{ "setLoopFlags",				_setLoopFlags },

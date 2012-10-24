@@ -319,7 +319,7 @@ void MOAILuaRuntime::BuildHistogram ( HistMap& histogram ) {
 void MOAILuaRuntime::ClearObjectStackTrace ( MOAILuaObject* object ) {
 
 	if ( object ) {
-		this->mLeaks.erase ( object );
+		this->mObjects.erase ( object );
 	}
 }
 
@@ -354,16 +354,16 @@ void MOAILuaRuntime::EnableHistogram ( bool enable ) {
 }
 
 //----------------------------------------------------------------//
-void MOAILuaRuntime::EnableLeakTracking ( bool enable ) {
+void MOAILuaRuntime::EnableObjectTracking ( bool enable ) {
 
-	this->mLeakTrackingEnabled = enable;
+	this->mObjectTrackingEnabled = enable;
 }
 
 //----------------------------------------------------------------//
 // This beast will walk through all tables and functions accessible in the
 // current lua state and print a reference line for each one found to help
 // track who is pointing to it.
-void MOAILuaRuntime::FindAndPrintLuaRefs ( int idx, cc8* prefix, FILE *f, const LeakPtrList& objects ) {
+void MOAILuaRuntime::FindAndPrintLuaRefs ( int idx, cc8* prefix, FILE *f, const ObjectPtrList& objects ) {
 
 	lua_State* L = this->mMainState;
 
@@ -455,7 +455,7 @@ void MOAILuaRuntime::FindAndPrintLuaRefs ( int idx, cc8* prefix, FILE *f, const 
 
 		MOAILuaState state ( L );
 		void *ud = state.GetPtrUserData ( -1 );
-		for ( LeakPtrList::const_iterator i = objects.begin (); i != objects.end (); ++i ) {
+		for ( ObjectPtrList::const_iterator i = objects.begin (); i != objects.end (); ++i ) {
 			if( *i == ud ) {
 				fprintf ( f, "\tLua Ref: %s = %s <%p>\n", prefix, ( *i )->TypeName (), ud );
 //				if ( strcmp((*i)->TypeName(), "MOAICoroutine") == 0 ) {
@@ -637,9 +637,9 @@ void MOAILuaRuntime::ReportLeaksFormatted ( FILE *f ) {
 	lua_State* L = this->mMainState;
 		
 	// First, correlate leaks by identical stack traces.
-	LeakStackMap stacks;
+	ObjectStackMap stacks;
 	
-	for ( LeakMap::const_iterator i = this->mLeaks.begin (); i != this->mLeaks.end (); ++i ) {
+	for ( ObjectMap::const_iterator i = this->mObjects.begin (); i != this->mObjects.end (); ++i ) {
 		stacks [ i->second ].push_back ( i->first );
 	}
 	
@@ -649,13 +649,13 @@ void MOAILuaRuntime::ReportLeaksFormatted ( FILE *f ) {
 	// (including multiple references) followed by the alloction stack
 	int top = lua_gettop ( L );
 	UNUSED ( top );
-	for ( LeakStackMap::const_iterator i = stacks.begin (); i != stacks.end (); ++i ) {
+	for ( ObjectStackMap::const_iterator i = stacks.begin (); i != stacks.end (); ++i ) {
 		
-		const LeakPtrList& list = i->second;
+		const ObjectPtrList& list = i->second;
 		
 		MOAILuaObject *o = list.front ();
 		fprintf ( f, "Allocation: %lu x %s\n", list.size (), o->TypeName ()); 
-		for( LeakPtrList::const_iterator j = list.begin (); j != list.end (); ++j ) {
+		for( ObjectPtrList::const_iterator j = list.begin (); j != list.end (); ++j ) {
 			fprintf ( f, "\t(%6d) %p\n", ( *j )->GetRefCount (), *j );
 		}
 		// A table to use as a traversal set.
@@ -674,34 +674,50 @@ void MOAILuaRuntime::ReportLeaksFormatted ( FILE *f ) {
 	fprintf ( f, "-- END LUA LEAKS --\n" );
 }
 
-//----------------------------------------------------------------//
-void MOAILuaRuntime::ReportLeaksRaw ( FILE *f ) {
+void MOAILuaRuntime::ReportDeclaration( FILE *f, MOAILuaObject *object) {
 
-	this->ForceGarbageCollection ();
-	
-	fprintf ( f, "-- LUA OBJECT LEAK REPORT ------------\n" );
-	u32 count = 0;
-	
-	for ( LeakMap::const_iterator i = this->mLeaks.begin () ; i != this->mLeaks.end (); ++i ) {
-		fputs ( i->second.c_str (), f );
-		count++;
+	if(!object) {
+		return;
 	}
-	fprintf ( f, "-- END LEAK REPORT (Total Objects: %d) ---------\n", count );
+
+	if(!this->mObjects[object]) {
+		fprintf (f, "Could not find declaration for 0x%p: %s\n", object, object->TypeName () );
+		return;
+	}
+
+	fprintf (f, "Declaration for 0x%p: %s\n", object, object->TypeName () );
+	fputs ( this->mObjects[object].c_str (), f );
 }
 
 //----------------------------------------------------------------//
-void MOAILuaRuntime::ResetLeakTracking () {
+void MOAILuaRuntime::ReportDeclarations ( FILE *f ) {
 
-	this->mLeaks.clear ();
+	this->ForceGarbageCollection ();
+	
+	fprintf ( f, "-- MOAI LUA OBJECTS ------------\n" );
+	u32 count = 0;
+	
+	for ( ObjectMap::const_iterator i = this->mObjects.begin () ; i != this->mObjects.end (); ++i ) {
+		fprintf (f, "Declaration for 0x%p: %s\n", i->first, i->first->TypeName () );
+		fputs ( i->second.c_str (), f );
+		count++;
+	}
+	fprintf ( f, "-- END MOAI LUA OBJECTS(Total Objects: %d) ---------\n", count );
+}
+
+//----------------------------------------------------------------//
+void MOAILuaRuntime::ResetObjectTracking () {
+
+	this->mObjects.clear ();
 }
 
 //----------------------------------------------------------------//
 void MOAILuaRuntime::SetObjectStackTrace ( MOAILuaObject* object ) {
 
-	if ( object && this->mLeakTrackingEnabled ) {
+	if ( object && this->mObjectTrackingEnabled ) {
 	
 		STLString trace = this->mMainState.GetStackTrace ( 1 );
-		this->mLeaks [ object ] = trace;
+		this->mObjects [ object ] = trace;
 	}
 }
 
@@ -729,7 +745,7 @@ MOAILuaStateHandle MOAILuaRuntime::State () {
 //----------------------------------------------------------------//
 MOAILuaRuntime::MOAILuaRuntime () :
 	mHistogramEnabled ( false ),
-	mLeakTrackingEnabled ( false ),
+	mObjectTrackingEnabled ( false ),
 	mTotalBytes ( 0 ),
 	mObjectCount ( 0 ),
 	mAllocLogEnabled ( false ) {
